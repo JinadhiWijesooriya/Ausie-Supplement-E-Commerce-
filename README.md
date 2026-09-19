@@ -135,38 +135,107 @@ A premium, full-stack Australian supplements e-commerce platform engineered for 
 
 ---
 
+## 🐳 Docker Deployment
+
+The platform includes a complete, production-grade Docker configuration with PostgreSQL, Redis, Django (Gunicorn + WhiteNoise), Next.js (Standalone Multi-Stage Runner), and Nginx reverse proxy.
+
+### 1. Quick Start with Docker Compose
+
+```bash
+docker compose up --build -d
+```
+
+### 2. Services & Port Mapping
+
+| Service | Technology | Port | Description |
+|---|---|---|---|
+| **Nginx Gateway** | Nginx 1.25 Alpine | `80` | Unified gateway routing `/` to Frontend and `/api/`, `/admin/` to Backend |
+| **Frontend** | Next.js 14 (Standalone) | `3000` | E-commerce web storefront |
+| **Backend** | Django 5 + Gunicorn | `8000` | REST API and Django Administration portal |
+| **Database** | PostgreSQL 16 Alpine | `5432` | Relational database with automated healthchecks |
+| **Cache & Broker** | Redis 7 Alpine | `6379` | In-memory caching and message broker |
+
+### 3. Management Commands in Docker
+
+* **Run Migrations:**
+  ```bash
+  docker compose exec backend python manage.py migrate
+  ```
+* **Seed Initial Data:**
+  ```bash
+  docker compose exec backend python seed_data.py
+  ```
+* **Create Superuser:**
+  ```bash
+  docker compose exec backend python manage.py createsuperuser
+  ```
+* **View Logs:**
+  ```bash
+  docker compose logs -f backend
+  docker compose logs -f frontend
+  ```
+* **Stop Containers:**
+  ```bash
+  docker compose down
+  ```
+
+---
+
 ## 📁 Repository Structure
 
 ```
 Ausie-Supplement-E-Commerce-/
 ├── backend/
-│   ├── accounts/          # Customer & wholesale account management
-│   ├── analytics/         # Sales and traffic analytics
-│   ├── blog/              # Health & supplement blog articles
-│   ├── brands/            # Supplement brand management
-│   ├── cart/              # Shopping cart & session handling
-│   ├── categories/        # Product categories & health goals
-│   ├── core/              # Django settings, URLs, WSGI configuration
-│   ├── coupons/           # Promotional codes & discounts
-│   ├── orders/            # Order processing, checkout, tracking
-│   ├── products/          # Product catalog, variants, tiered pricing
-│   ├── reviews/           # Verified reviews, ratings, photos
-│   ├── wholesale/         # B2B pricing, wholesale approval workflows
+│   ├── apps/              # Django modular applications (accounts, products, cart, etc.)
+│   ├── config/            # Django settings, URLs, WSGI, ASGI
+│   ├── Dockerfile         # Python 3.12-slim production container
+│   ├── entrypoint.sh      # DB connection check & migration runner
+│   ├── .dockerignore      # Ignored patterns for Docker context
 │   ├── manage.py          # Django CLI
 │   └── requirements.txt   # Python dependencies
 ├── frontend/
-│   ├── src/
-│   │   ├── app/           # Next.js App Router (pages & API routes)
-│   │   ├── components/    # Reusable UI components
-│   │   ├── lib/           # API clients, helpers, constants
-│   │   └── types/         # TypeScript definitions
-│   ├── package.json       # Frontend scripts and packages
-│   └── tsconfig.json      # TypeScript configuration
+│   ├── app/               # Next.js App Router (pages & layout)
+│   ├── components/        # UI components (Header, ProductCard, Quiz, etc.)
+│   ├── lib/               # API clients, TypeScript types, and utilities
+│   ├── public/            # Static images and assets
+│   ├── Dockerfile         # Multi-stage optimized standalone container
+│   ├── .dockerignore      # Ignored patterns for Docker context
+│   ├── next.config.ts     # Next.js configuration (standalone output)
+│   └── package.json       # Dependencies and build scripts
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml      # GitHub Actions CI/CD Pipeline
+├── nginx/
+│   └── nginx.conf         # Unified reverse proxy routing
+├── docker-compose.yml     # Multi-container orchestration
+├── .env.example           # Environment configuration template
 └── README.md              # Project documentation
 ```
+
+---
+
+## 🚀 CI/CD Pipeline (GitHub Actions)
+
+This repository includes a production-grade automated CI/CD pipeline located in `.github/workflows/ci-cd.yml`:
+
+- **Automated Quality Checks**:
+  - **Frontend**: Dependency installation (`npm ci`), TypeScript strict type-checking (`npx tsc --noEmit`), and production compilation (`next build`).
+  - **Backend**: Python dependencies installation, Django system sanity checks (`manage.py check`), uncommitted migration detection (`makemigrations --check`), and automated test suite run (`manage.py test`).
+- **Container Delivery**:
+  - Automatically triggered upon successful completion of CI jobs when code is merged or pushed to `main`.
+  - Multi-platform image builds using Docker Buildx and GitHub Actions layer caching (`type=gha`).
+  - Publishes tagged images to Docker Hub (`:latest` and `:<commit-sha>`).
+
+### Required GitHub Secrets
+
+To activate automatic publishing to Docker Hub, configure the following secrets in GitHub (**Settings > Secrets and variables > Actions**):
+
+- `DOCKERHUB_USERNAME`: Your Docker Hub account username.
+- `DOCKERHUB_TOKEN`: Personal Access Token created in Docker Hub (with Read/Write access).
 
 ---
 
 ## 📄 License
 
 This project is licensed under the MIT License.
+

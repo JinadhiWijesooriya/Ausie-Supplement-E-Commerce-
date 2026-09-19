@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from typing import Any
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -74,7 +76,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
 # Database configuration
-DATABASES = {
+DATABASES: dict[str, Any] = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -86,7 +88,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     try:
         import dj_database_url
-        DATABASES['default'] = dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+        DATABASES['default'] = dj_database_url.config(default=DATABASE_URL, conn_max_age=600)  # type: ignore
     except ImportError:
         pass
 
@@ -159,6 +161,10 @@ SIMPLE_JWT = {
 # CORS Configuration (Strict Whitelist - OWASP A05)
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
+    'http://localhost',
+    'http://127.0.0.1',
+    'http://localhost:80',
+    'http://127.0.0.1:80',
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
